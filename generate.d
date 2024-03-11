@@ -11,6 +11,8 @@ import generate_impl;
 
 void main(string[] args) {
 
+    writeln("start");
+
 
 
     import std.getopt;
@@ -26,16 +28,16 @@ void main(string[] args) {
         args,
 
         std.getopt.config.required,
-        "mid", "path to machine", &fsmPath, 
-        
-        std.getopt.config.required,
-        "tid", "path to store generated traces", &samplePath,
-        
-        std.getopt.config.required,
-        "rs", "random seed", &randomSeed, 
+        "mid", "path to machine", &fsmPath,
 
         std.getopt.config.required,
-        "sz", "trace count", &sampleSize, 
+        "tid", "path to store generated traces", &samplePath,
+
+        std.getopt.config.required,
+        "rs", "random seed", &randomSeed,
+
+        std.getopt.config.required,
+        "sz", "trace count", &sampleSize,
     );
 
     if (helpInfo.helpWanted) {
@@ -45,26 +47,28 @@ void main(string[] args) {
     }
 
 
-    // load machine
+    writeln("load machine");
 
-    auto fsm = Moore!TraceElem.fromFile(fsmPath);
+    auto fsm = Moore!string.fromJsonFile(fsmPath);
 
 
-    // generate sample
+    writeln("generate sample");
 
     auto rng = Random(randomSeed);
-
     auto sample = genSample(rng, fsm, sampleSize);
     //auto sample = genTreeSample(rng, fsm, sampleSize);
-    
 
-    auto sampleStr = numSample2strSample(sample, fsm.b2sAlphaMap);
+    writeln("sampleStr");
 
-    sampleStr.saveMooreSample(samplePath);
+    /* auto sampleStr = numSample2strSample(sample, fsm.b2sAlphaMap); */
+
+    writeln("save");
+
+    sample.saveMooreSample(samplePath);
 
     // store sample to file
 
 
-    
+
 
 }

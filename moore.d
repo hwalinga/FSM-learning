@@ -87,7 +87,7 @@ class Moore(Tin, Tout = Tin) {
             size of output alphabet
             output alphabet elements
             number of states
-            
+
             states (in order of increasing id)
                 value
                 children ids (in order of increasing input letter), -1 if does not exist
@@ -108,11 +108,11 @@ class Moore(Tin, Tout = Tin) {
 
         // TODO: also store mappings (as json) if available -- DONE
 
-        if (s2bAlphaMap.inMap  !is null && 
-            s2bAlphaMap.outMap !is null && 
-            b2sAlphaMap.inMap  !is null && 
+        if (s2bAlphaMap.inMap  !is null &&
+            s2bAlphaMap.outMap !is null &&
+            b2sAlphaMap.inMap  !is null &&
             b2sAlphaMap.outMap !is null) {
-                
+
             format!"%s-alpha-maps.json"(path).write(
                 format!"[\n%s\n,\n%s\n]"(
                     s2bAlphaMap.toJsonStr,
@@ -163,7 +163,7 @@ class Moore(Tin, Tout = Tin) {
 
     static Moore!(Tin, Tout) fromFile(JI = void)(string path) {
 
-        
+
 
         import std.stdio;
         import std.file;
@@ -177,27 +177,30 @@ class Moore(Tin, Tout = Tin) {
             size of output alphabet
             output alphabet elements
             number of states
-            
+
             states (in order of increasing id)
                 value
                 children ids (in order of increasing input letter), -1 if does not exist
 
         */
 
-        //writeln("loading fsm: ", path);
+        writeln("loading fsm: ", path);
 
         auto ret = new Moore!(Tin, Tout);
 
         auto fin = File(path, "rb");
 
+        writeln("rawRead1");
         auto alphaInSize = fin.rawRead(new typeof(alphaIn.keys.length)[1])[0];
+        writeln("rawRead2 ", alphaInSize);
         auto alphaInArr = fin.rawRead(new Tin[alphaInSize]);
 
+        writeln("looping");
         foreach (a; alphaInArr) {
             ret.alphaIn[a] = true;
         }
 
-        //writefln!"loaded alphaIn len: %s"(ret.alphaIn.keys.length);
+        writefln!"loaded alphaIn len: %s"(ret.alphaIn.keys.length);
 
 
         auto alphaOutSize = fin.rawRead(new typeof(alphaOut.keys.length)[1])[0];
@@ -207,7 +210,7 @@ class Moore(Tin, Tout = Tin) {
             ret.alphaOut[a] = true;
         }
 
-        //writefln!"loaded alphaOut len: %s"(ret.alphaOut.keys.length);
+        writefln!"loaded alphaOut len: %s"(ret.alphaOut.keys.length);
 
 
         // TODO: also load mappings (from json) if available -- DONE
@@ -226,8 +229,8 @@ class Moore(Tin, Tout = Tin) {
             return ret;
         }
 
-        //writefln!"\nstate count: %s \nalphaInSize: %s \nalphaOutSize: %s"(
-        //    -1, alphaInSize, alphaOutSize);
+        writefln!"\nstate count: %s \nalphaInSize: %s \nalphaOutSize: %s"(
+            -1, alphaInSize, alphaOutSize);
 
         auto stateCount = fin.rawRead(new typeof(states.length)[1])[0];
 
@@ -243,7 +246,7 @@ class Moore(Tin, Tout = Tin) {
         auto sortedAlphabet = ret.alphaIn.keys.sort.array;
 
         foreach (i; 0 .. stateCount) {
-            
+
             //auto q = new MooreState!(Tin, Tout);
 
             fin.rawRead(idArr);
