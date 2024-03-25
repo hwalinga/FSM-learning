@@ -11,7 +11,7 @@ import generate_impl;
 
 void main(string[] args) {
 
-    writeln("start");
+    /* writeln("start"); */
 
 
 
@@ -47,24 +47,24 @@ void main(string[] args) {
     }
 
 
-    writeln("load machine");
+    /* writeln("load machine"); */
 
     auto fsm = Moore!string.fromJsonFile(fsmPath);
 
 
-    writeln("generate sample");
+    /* writeln("generate sample"); */
 
     auto rng = Random(randomSeed);
-    auto sample = genSample(rng, fsm, sampleSize);
+    auto sample = genSample(rng, fsm, sampleSize, samplePath);
     //auto sample = genTreeSample(rng, fsm, sampleSize);
 
-    writeln("sampleStr");
+    /* writeln("sampleStr"); */
 
     /* auto sampleStr = numSample2strSample(sample, fsm.b2sAlphaMap); */
 
-    writeln("save");
+    /* writeln("done"); */
 
-    sample.saveMooreSample(samplePath);
+    /* sample.saveMooreSample(samplePath); */
 
     // store sample to file
 

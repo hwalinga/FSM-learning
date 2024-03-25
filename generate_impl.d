@@ -37,7 +37,7 @@ double normal(RNG)(double mu, double sigma, ref RNG rng) {
 
     double z0 = sqrt(-2.0 * log(u1)) * cos(two_pi * u2);
            z1 = sqrt(-2.0 * log(u1)) * sin(two_pi * u2);
-	
+
     return z0 * sigma + mu;
 }
 
@@ -65,8 +65,8 @@ uint biasedChoice(RNG)(ref RNG rng, double[] dist) {
 
 
 
-uint diameter(Tin, Tout, alias FSM)(FSM!(Tin, Tout) fsm) 
-    if (is(FSM!(Tin, Tout) == Moore!(Tin, Tout)) || 
+uint diameter(Tin, Tout, alias FSM)(FSM!(Tin, Tout) fsm)
+    if (is(FSM!(Tin, Tout) == Moore!(Tin, Tout)) ||
         is(FSM!(Tin, Tout) == Mealy!(Tin, Tout))) {
 
     //writeln("computing diameter...");
@@ -127,10 +127,11 @@ uint diameter(Tin, Tout, alias FSM)(FSM!(Tin, Tout) fsm)
 
 const useTree = true;
 
-Trace!(Tin, Tout)[] genSample(RNG, Tin, Tout, alias FSM)(ref RNG rng, FSM!(Tin, Tout) fsm, int sampleSize)
-    if (is(FSM!(Tin, Tout) == Moore!(Tin, Tout)) || 
+Trace!(Tin, Tout)[] genSample(RNG, Tin, Tout, alias FSM)(ref RNG rng, FSM!(Tin, Tout) fsm, int sampleSize, string fname)
+    if (is(FSM!(Tin, Tout) == Moore!(Tin, Tout)) ||
         is(FSM!(Tin, Tout) == Mealy!(Tin, Tout))) {
 
+    auto fout = File(fname, "w");
 
     bool[ulong] sink;
 
@@ -174,7 +175,7 @@ Trace!(Tin, Tout)[] genSample(RNG, Tin, Tout, alias FSM)(ref RNG rng, FSM!(Tin, 
     auto hiLen = (3.5 * diam + 0.1).to!int;
     if (hiLen <= 0) hiLen = 1;
 
-    writefln!"diam: %s, loLen: %s, hiLen: %s"(diam, loLen, hiLen);
+    /* writefln!"diam: %s, loLen: %s, hiLen: %s"(diam, loLen, hiLen); */
 
 
     static if (useTree) {
@@ -184,7 +185,7 @@ Trace!(Tin, Tout)[] genSample(RNG, Tin, Tout, alias FSM)(ref RNG rng, FSM!(Tin, 
     }
 
     const twiceDiam = 2.0 * diam;
-    const halfDiam = 0.5 * diam; 
+    const halfDiam = 0.5 * diam;
 
 
     //foreach (_; 0 .. sampleSize) {
@@ -199,7 +200,7 @@ Trace!(Tin, Tout)[] genSample(RNG, Tin, Tout, alias FSM)(ref RNG rng, FSM!(Tin, 
         Trace!(Tin, Tout) tr;
 
         static if (is(FSM!(Tin, Tout) == Moore!(Tin, Tout))){
-            tr.output ~= q.value;            
+            tr.output ~= q.value;
         }
 
         //auto traceSize = uniform!"[]"(loLen, hiLen, rng);
@@ -227,7 +228,7 @@ Trace!(Tin, Tout)[] genSample(RNG, Tin, Tout, alias FSM)(ref RNG rng, FSM!(Tin, 
 
             auto nextStates = alphaInSorted.map!(a => q.children[a].id).array;
 
-            //writeln; q.id.writeln; nextStates.writeln; 
+            //writeln; q.id.writeln; nextStates.writeln;
             //targetStatesArr.writeln; freq.writeln; dist.writeln;
 
             auto j = biasedChoice(rng, dist);
@@ -245,15 +246,15 @@ Trace!(Tin, Tout)[] genSample(RNG, Tin, Tout, alias FSM)(ref RNG rng, FSM!(Tin, 
             tr.input ~= a;
 
             static if (is(FSM!(Tin, Tout) == Mealy!(Tin, Tout))){
-                tr.output ~= q.values[a];            
+                tr.output ~= q.values[a];
             }
 
             q = q.children[a];
 
             static if (is(FSM!(Tin, Tout) == Moore!(Tin, Tout))){
-                tr.output ~= q.value;            
+                tr.output ~= q.value;
             }
-            
+
 
             ++ visited[q.id];
 
@@ -267,11 +268,14 @@ Trace!(Tin, Tout)[] genSample(RNG, Tin, Tout, alias FSM)(ref RNG rng, FSM!(Tin, 
                     traceExists = false;
 
                     if (treeLen >= sampleSize) {
-                        ret ~= tr;
+                        fout.write(tr.input.join(","));
+                        fout.write(" -> ");
+                        fout.writeln(tr.output.join(","));
+
                         break outer;
                     }
                 }
-                
+
                 tnode = tnode.children[a];
             }
 
@@ -288,7 +292,9 @@ Trace!(Tin, Tout)[] genSample(RNG, Tin, Tout, alias FSM)(ref RNG rng, FSM!(Tin, 
 
         }
 
-        ret ~= tr;
+        fout.write(tr.input.join(","));
+        fout.write(" -> ");
+        fout.writeln(tr.output.join(","));
 
         static if (useTree) {
             if (treeLen >= sampleSize) {
@@ -301,13 +307,13 @@ Trace!(Tin, Tout)[] genSample(RNG, Tin, Tout, alias FSM)(ref RNG rng, FSM!(Tin, 
         }
     }
 
-    writeln; writeln(visited);
+    /* writeln; writeln(visited); */
 
     static if (false) {
-        writeln; foreach (k, v; taken) { 
-            write(k, " "); 
+        writeln; foreach (k, v; taken) {
+            write(k, " ");
             auto vs = v.byPair.array.sort!"a[1] < b[1]";
-            
+
             '['.write;
             foreach (k1, v1; vs) {
                 write(" (", k1, " : ", v1, "), ");
@@ -317,7 +323,7 @@ Trace!(Tin, Tout)[] genSample(RNG, Tin, Tout, alias FSM)(ref RNG rng, FSM!(Tin, 
             writeln;
         }
     }
-        
+
 
     return ret;
 }
