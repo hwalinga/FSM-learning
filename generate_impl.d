@@ -21,18 +21,18 @@ double normal(RNG)(double mu, double sigma, ref RNG rng) {
 
     // https://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform
 
-	static const double two_pi = 2.0*3.14159265358979323846;
+    static const double two_pi = 2.0*3.14159265358979323846;
 
-	static double z1;
-	static bool generate = false;
+    static double z1;
+    static bool generate = false;
 
-	generate = !generate;
+    generate = !generate;
 
-	if (!generate) {
+    if (!generate) {
         return z1 * sigma + mu;
     }
 
-	double u1 = uniform!"()"(0.0, 1.0, rng);
+    double u1 = uniform!"()"(0.0, 1.0, rng);
     double u2 = uniform!"()"(0.0, 1.0, rng);
 
     double z0 = sqrt(-2.0 * log(u1)) * cos(two_pi * u2);
@@ -226,7 +226,7 @@ Trace!(Tin, Tout)[] genSample(RNG, Tin, Tout, alias FSM)(ref RNG rng, FSM!(Tin, 
 
             auto dist = freq.map!(a => (m/a)*d).array;
 
-            auto nextStates = alphaInSorted.map!(a => q.children[a].id).array;
+            /* auto nextStates = alphaInSorted.map!(a => q.children[a].id).array; */
 
             //writeln; q.id.writeln; nextStates.writeln;
             //targetStatesArr.writeln; freq.writeln; dist.writeln;
