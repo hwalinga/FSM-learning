@@ -68,10 +68,12 @@ def makeRandomMoore(rseed, sCount, aSize, oSize):
         print OPT_NL + 'adding transitions...'
 
     dDict = {}
+    wDict = {}
 
     for q in states:
         for a in inAlphabet:
             dDict[(q, a)] = states[random.randint(0, sCount - 1)]
+            wDict[(q, a)] = random.random()
 
     stateIdChain = range(1, sCount)
     random.shuffle(stateIdChain)
@@ -82,9 +84,10 @@ def makeRandomMoore(rseed, sCount, aSize, oSize):
         q1 = 'q_%s' % stateIdChain[i]
         q2 = 'q_%s' % stateIdChain[i + 1]
         dDict[(q1, a)] = q2
+        wDict[(q1, a)] = random.random()
         #print '(%s, %s) -> %s' % (q1, a, q2)
 
-    ret = Moore(inAlphabet, outAlphabet, states, init, dDict, gDict)
+    ret = Moore(inAlphabet, outAlphabet, states, init, dDict, gDict, wDict)
 
     #assert isMinimal(ret)
 

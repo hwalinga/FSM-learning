@@ -141,6 +141,8 @@ Trace!(Tin, Tout)[] genSample(RNG, Tin, Tout, alias FSM)(ref RNG rng, FSM!(Tin, 
 
     Tin[][ulong][ulong] targetStates; // from q i can visit p with {a, b, c}
 
+    double[ulong][ulong] targetStatesWeights;
+
     foreach (k, v; fsm.states) {
         visited[k] = 0;
 
@@ -152,6 +154,9 @@ Trace!(Tin, Tout)[] genSample(RNG, Tin, Tout, alias FSM)(ref RNG rng, FSM!(Tin, 
             taken[k][a] = 0;
             auto c = v.children[a];
             targetStates[v.id][c.id] ~= a;
+
+            double w = v.weights[a];
+            targetStatesWeights[v.id][c.id] = w;
         }
 
         if (all!(a => v.id == v.children[a].id)(fsm.alphaIn.keys)) {
@@ -219,12 +224,16 @@ Trace!(Tin, Tout)[] genSample(RNG, Tin, Tout, alias FSM)(ref RNG rng, FSM!(Tin, 
             auto targetStatesArr = targetStates[q.id].keys;
 
             auto freq = targetStatesArr.map!(sid => visited[sid] + 1).array;
+            // Instead of the frequency of the target states,
+            // take the random weight given to a transition.
+            // NB conversion gives higher chance to lower weights!
+            auto weights = targetStatesArr.map!(sid => targetStatesWeights[q.id][sid]).array;
 
-            double m = freq.maxElement;
+            double m = weights.maxElement;
 
-            double d = 1.0 / (freq.map!(a => (m/a) ).sum);
+            double d = 1.0 / (weights.map!(a => (m/a) ).sum);
 
-            auto dist = freq.map!(a => (m/a)*d).array;
+            auto dist = weights.map!(a => (m/a)*d).array;
 
             /* auto nextStates = alphaInSorted.map!(a => q.children[a].id).array; */
 
@@ -232,6 +241,8 @@ Trace!(Tin, Tout)[] genSample(RNG, Tin, Tout, alias FSM)(ref RNG rng, FSM!(Tin, 
             //targetStatesArr.writeln; freq.writeln; dist.writeln;
 
             auto j = biasedChoice(rng, dist);
+
+            /* writefln!"%s:%s:%s"(j, dist.map!(to!string).join(','), weights.map!(to!string).join(',')); */
 
             auto q1id = targetStatesArr[j];
 
@@ -241,7 +252,7 @@ Trace!(Tin, Tout)[] genSample(RNG, Tin, Tout, alias FSM)(ref RNG rng, FSM!(Tin, 
 
             ++ taken[q.id][a];
 
-            //writefln!"picked letter %s to visit state %s"(alphaInSorted[j], q.children[a].id);
+            /* writefln!"picked letter %s to visit state %s"(alphaInSorted[j], q.children[a].id); */
 
             tr.input ~= a;
 

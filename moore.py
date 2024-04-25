@@ -1,18 +1,18 @@
+import cPickle
+from itertools import izip, product
+import zlib
+import math
+import json
+import gzip
 import sys
 
 sys.dont_write_bytecode = True
 
-from itertools import product, izip
-import math
-import cPickle
-import gzip
-import json
-import zlib
 
 class Moore:
 
-    def __init__(self, S, O, Q, q0, dDict, gDict):
-        #assert type(Q) is set
+    def __init__(self, S, O, Q, q0, dDict, gDict, wDict):
+        # assert type(Q) is set
         self.S = S
         self.O = O
         self.Q = Q
@@ -20,6 +20,7 @@ class Moore:
         self.q = q0
         self.o = ''
         self.dDict = dDict
+        self.wDict = wDict
         self.gDict = gDict
 
         lg = math.log(len(O), 2)
@@ -27,13 +28,13 @@ class Moore:
 
         self.Onbits = lgi if lgi == lg else lgi + 1
 
-        if self.Onbits < 1: self.Onbits = 1
+        if self.Onbits < 1:
+            self.Onbits = 1
 
-        self.O2bits = dict(izip(self.O, product([0, 1], repeat = self.Onbits)))
+        self.O2bits = dict(izip(self.O, product([0, 1], repeat=self.Onbits)))
         self.bits2O = {v: k for k, v in self.O2bits.iteritems()}
 
         self.reset()
-
 
     def d(self, q, a):
         return self.dDict.get((q, a))
@@ -43,14 +44,14 @@ class Moore:
         ret = q
         for a in w:
             ret = self.d(ret, a)
-            #print ret
+            # print ret
 
         return ret
 
     def g(self, q):
         return self.gDict.get(q)
 
-    def reset(self, q = None):
+    def reset(self, q=None):
 
         q = q or self.q0
 
@@ -59,17 +60,16 @@ class Moore:
 
     def step(self, a):
 
-        #print a
+        # print a
 
-        #if a != '' and a != self.e:
+        # if a != '' and a != self.e:
         if a and a not in ('.l',):
             self.q = self.d(self.q, a)
             self.o = self.g(self.q)
 
-
     def transduce(self, w):
 
-        #print 'transducing', w
+        # print 'transducing', w
 
         q = self.q0
 
@@ -79,12 +79,11 @@ class Moore:
             q = self.d(q, a)
             ret.append(self.g(q))
 
-
         return tuple(ret)
 
     def outputOn(self, w):
 
-        #if w == '.l':
+        # if w == '.l':
         if w == self.e:
             return self.o
 
@@ -129,16 +128,15 @@ class Moore:
             print s, '->', self.o
         print '=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-='
 
-
-    def toGraphStr(self, nidOffset = 0):
+    def toGraphStr(self, nidOffset=0):
 
         lines = []
 
         def pq(q):
             if q.startswith('('):
-                #print 'tuple!'
-                #return '(%s)' % ', '.join(eval(q))
-                return '%s' % eval(q)[0].replace("'", '').replace(',)',')')
+                # print 'tuple!'
+                # return '(%s)' % ', '.join(eval(q))
+                return '%s' % eval(q)[0].replace("'", '').replace(',)', ')')
             return q
 
         for i, q in enumerate(sorted(self.Q), nidOffset):
@@ -148,7 +146,8 @@ class Moore:
             if fill == list('999'):
                 fill = list('fff')
 
-            lines.append( '%s [label="%s" style="fill: #%s"];' % (i, '%s | %s' % (pq(q), self.g(q)), ''.join(fill)) )
+            lines.append('%s [label="%s" style="fill: #%s"];' %
+                         (i, '%s | %s' % (pq(q), self.g(q)), ''.join(fill)))
 
         lines.append('\n')
 
@@ -158,12 +157,11 @@ class Moore:
                 self.reset(s)
                 self.step(a)
 
-                lines.append( '%s -> %s [labelType = "html" label="<div style=\'min-width:20px; min-height:20px; background-color:white; z-index:100; border: 1.5px solid black; text-align: center; border-radius: 10px;\'>%s</div>" lineInterpolate=""]' % (i, sQ.index(self.q) + nidOffset, a) )
+                lines.append('%s -> %s [labelType = "html" label="<div style=\'min-width:20px; min-height:20px; background-color:white; z-index:100; border: 1.5px solid black; text-align: center; border-radius: 10px;\'>%s</div>" lineInterpolate=""]' % (i, sQ.index(self.q) + nidOffset, a))
 
             lines.append('\n')
 
         return '\n'.join(lines)
-
 
     def encryptHeader(self, fname):
 
@@ -185,8 +183,6 @@ class Moore:
 
         self.encryptHeader(fname)
 
-
-
     def saveToFile(self, fname):
 
         with gzip.open(fname, 'wb') as fout:
@@ -195,19 +191,21 @@ class Moore:
 
         self.encryptHeader(fname)
 
-
     def saveAsJson(self, fname):
 
         with open(fname, 'w') as fout:
 
             jdDict = {}
+            jwDict = {}
 
             for q in self.Q:
 
                 jdDict[str(q)] = {}
+                jwDict[str(q)] = {}
 
                 for a in self.S:
                     jdDict[str(q)][a] = str(self.dDict[(q, a)])
+                    jwDict[str(q)][a] = self.wDict[(q, a)]
 
             jgDict = {}
 
@@ -216,14 +214,14 @@ class Moore:
                 jgDict[str(q)] = self.gDict[q]
 
             json.dump({
-                    'input-alphabet' : sorted(self.S),
-                    'output-alphabet' : sorted(self.O),
-                    'states' : sorted(map(str, self.Q)),
-                    'initial-state' : str(self.q0),
-                    'output-function' : jgDict,
-                    'transition-function' : jdDict,
-                }, fout, indent = 2)
-
+                'input-alphabet': sorted(self.S),
+                'output-alphabet': sorted(self.O),
+                'states': sorted(map(str, self.Q)),
+                'initial-state': str(self.q0),
+                'output-function': jgDict,
+                'transition-function': jdDict,
+                'weight-function': jwDict,
+            }, fout, indent=2)
 
     def loadFromEncryptedFile(self, fname):
 
@@ -245,7 +243,6 @@ class Moore:
 
         return ret
 
-
     def loadFromFile(self, fname):
 
         try:
@@ -260,12 +257,9 @@ class Moore:
 
             return self.loadFromEncryptedFile(fname)
 
-
-
     def makeComplete(self):
 
-
-        #self.Q = set(self.Q)
+        # self.Q = set(self.Q)
         assert type(self.Q) is set
 
         o = min(self.O)
@@ -280,19 +274,18 @@ class Moore:
 
             for a in S:
                 qa = dDict.get((q, a))
-                #if qa not in Q:
-                if qa is None: #None in qa:
-                    #print qa
-                    #assert None in qa
-                    #print 'completed trans'
+                # if qa not in Q:
+                if qa is None:  # None in qa:
+                    # print qa
+                    # assert None in qa
+                    # print 'completed trans'
                     dDict[(q, a)] = q
 
         return self
 
-
     def fixInvalidCodes(self):
 
-        #self.Q = set(self.Q)
+        # self.Q = set(self.Q)
         assert type(self.Q) is set
 
         o = min(self.O)
@@ -306,10 +299,10 @@ class Moore:
         for q in Q:
 
             oq = gDict.get(q)
-            #if oq not in O:
+            # if oq not in O:
             if oq == None:
-                #assert oq == None
-                #print 'completed out'
+                # assert oq == None
+                # print 'completed out'
                 gDict[q] = o
 
         return self

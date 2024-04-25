@@ -19,6 +19,10 @@ class MooreState(Tin, Tout = Tin) {
     MooreState[Tin] children;
 
     uint id;
+
+    // Keeps track of weight that determines the amount of visits
+    // this state should receive (for non-uniform sampling).
+    double[Tin] weights;
 }
 
 
@@ -342,6 +346,15 @@ class Moore(Tin, Tout = Tin) {
 
             foreach (a, q; v.object) {
                 source.children[a] = ret.states[state2id[q.str]];
+            }
+        }
+
+        foreach (k, v; data["weight-function"].object) {
+
+            auto source = ret.states[state2id[k]];
+
+            foreach (a, q; v.object) {
+                source.weights[a] = q.floating;
             }
         }
 
