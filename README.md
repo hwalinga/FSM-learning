@@ -3,6 +3,23 @@
 
 This repository hosts code accompanying [Learning Moore Machines from Input-Output Traces](https://arxiv.org/abs/1605.07805) and related publications.
 
+## Fork!
+
+This project was forked to be used in the research into database assisted state machine learning. (TODO add those links when published.)
+
+This fork contains changes so that it works on Linux by using the JSON interfaces and not the binary interfaces.
+
+It also comes with a script to convert the moore traces to abbadingo traces. Random end points are chosen from the Moore trace. See `moore2trace.py` for how this works.
+
+Usage:
+
+```
+./generate --mid out/fsmtest_200_1.json --tid /dev/stdout --rs 222 --sz 1000000000 | python moore2trace.py | head -n 1040000 > out/fsmtest_200_222.dat
+```
+
+A very large `--sz` is set to keep continuing making data until enough lines are made and closing the pipe.
+
+There is also a branch `no-uniform-sampling` which enhances the `gen_moore.py` script to give each transition a weight and a modified generate_impl.d file which uses these weight to generate traces that have a non-uniform distribution on what transitions it is using. (The old version deliberately tried to make the distribution as uniform as possible by keeping track of the frequenceies of the visisted nodes.)
 
 ## Prerequisites
 
